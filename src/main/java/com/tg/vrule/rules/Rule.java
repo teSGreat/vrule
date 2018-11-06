@@ -1,9 +1,11 @@
 package com.tg.vrule.rules;
 
-public interface Rule {
-    void apply();
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-    default boolean isRight() {
-        return true;
-    }
+public interface Rule<T> extends Consumer<T> {
+
+    Rule<T> onCondition(Predicate<T> condition);
+
+    boolean isApplied(T targetContext);
 }

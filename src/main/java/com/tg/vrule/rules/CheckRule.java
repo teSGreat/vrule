@@ -1,24 +1,35 @@
 package com.tg.vrule.rules;
 
-import com.tg.vrule.condition.Condition;
-import com.tg.vrule.context.ValueCntx;
+import com.tg.vrule.ctx.ValueConsumerCtx;
+import java.util.function.Predicate;
 
-public class CheckRule<T> implements Rule {
+public class CheckRule<V, E, T> extends CondRule<T> {
 
-    private final ValueCntx<T> valueCntx;
-    private final Condition<T> condition;
-    private final String err;
+    private final ValueConsumerCtx<E, T> errorConsumer;
+    private Predicate<T> checkCondition;
 
-    public CheckRule(Condition<T> condition, ValueCntx<T> valueCntx, String err) {
-        this.valueCntx = valueCntx;
-        this.condition = condition;
+    private E err;
+
+    public CheckRule(ValueConsumerCtx<E, T> errorConsumer) {
+        this.errorConsumer = errorConsumer;
+    }
+
+    public CheckRule<V, E, T> setCheckCondition(Predicate<T> condition) {
+        this.checkCondition = condition;
+        return this;
+    }
+
+    public CheckRule<V, E, T> setErr(E err) {
         this.err = err;
+        return this;
     }
 
     @Override
-    public void apply() {
-        if (!condition.check(valueCntx)) {
-            condition.onError(err);
+    public void accept(T targetCtx) {
+        if (isApplied(targetCtx) && !checkCondition.test(targetCtx)) {
+            if (err != null) {
+                errorConsumer.accept(err, targetCtx);
+            }
         }
     }
 }

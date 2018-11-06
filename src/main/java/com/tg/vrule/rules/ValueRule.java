@@ -1,21 +1,22 @@
 package com.tg.vrule.rules;
 
-import com.tg.vrule.context.ValueCntx;
+import com.tg.vrule.ctx.ValueConsumerCtx;
+import com.tg.vrule.ctx.ValueCtx;
 
-import java.util.function.Consumer;
+public class ValueRule<V, T> extends CondRule<T> {
 
-public class ValueRule<T> implements Rule {
+    private final ValueConsumerCtx<V, T> valueConsumer;
+    private final ValueCtx<V, T> valueCtx;
 
-    private final Consumer<T> param;
-    private final ValueCntx<T> valueCntx;
-
-    public ValueRule(Consumer<T> param, ValueCntx<T> valueCntx) {
-        this.param = param;
-        this.valueCntx = valueCntx;
+    public ValueRule(ValueConsumerCtx<V, T> valueConsumer, ValueCtx<V, T> valueCtx) {
+        this.valueConsumer = valueConsumer;
+        this.valueCtx = valueCtx;
     }
 
     @Override
-    public void apply() {
-        param.accept(valueCntx.value());
+    public void accept(T targetCtx) {
+        if (isApplied(targetCtx)) {
+            valueConsumer.accept(valueCtx.value(targetCtx), targetCtx);
+        }
     }
 }

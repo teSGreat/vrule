@@ -1,111 +1,72 @@
 package com.tg.vrule;
 
-import com.tg.vrule.condition.ValueCondition;
-import com.tg.vrule.context.SimpleValueHolder;
-import com.tg.vrule.context.ValueCntx;
-import com.tg.vrule.rules.CaseRule;
 import com.tg.vrule.rules.CheckRule;
 import com.tg.vrule.rules.RuleSet;
 import com.tg.vrule.rules.ValueRule;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.function.Predicate;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ValueRuleTest {
 
-    @Test
-    void test_1() {
+    private Map<String, Param> params;
 
-        final Param param = new Param("Num");
-        new RuleSet()
-                .addRule(new ValueRule<>(param::setValue, new SimpleValueHolder<>("123")))
-                .apply();
-
-        Assertions.assertEquals("123", param.getValue());
+    @BeforeEach
+    void setUp() {
+        params = new HashMap<>();
     }
 
     @Test
-    void test_2() {
+    void simple_value_rule_test() {
+        params.put("Num", new Param("Num"));
 
-        final Param param = new Param("Num", "");
-        new RuleSet()
-                .addRule(new CheckRule<>(
-                        new ValueCondition<>(new ParamValueEqualsPred(param), param::setErr),
-                        new SimpleValueHolder<>(123), "Не равен 123"
-                ))
-                .apply();
-
-        Assertions.assertEquals("Не равен 123", param.getErr());
+        RuleSet<Map<String, Param>> rs =
+                new RuleSet<Map<String, Param>>()
+                        .addRule(new ValueRule<>((value, ctx) -> ctx.get("Num").setValue(value),
+                                targetCtx -> "123"));
+        rs.accept(params);
+        Assertions.assertEquals("123", params.get("Num").getValue());
     }
 
     @Test
-    void test_3() {
-        final Param paramE = new Param("E", "0");
-        final Param paramX = new Param("X");
-        new RuleSet()
-                .addRule(new CaseRule<>(paramE::getValue)
-                        .onCase(() -> "0", new ValueRule<>(paramX::setValue, () -> "X")))
-                .apply();
-        Assertions.assertEquals("X", paramX.getValue());
+    void value_with_condition_rule_test() {
+
+        params.put("Num", new Param("Num").setValue("1"));
+        params.put("Code", new Param("2"));
+
+        RuleSet<Map<String, Param>> rs =
+                new RuleSet<Map<String, Param>>()
+                        .addRule(new ValueRule<String, Map<String, Param>>((value, ctx) -> ctx.get("Num").setValue(value),
+                                targetCtx -> "123")
+                                .onCondition(ctx -> "3".equals(ctx.get("Code").getValue()))
+                        );
+
+        rs.accept(params);
+        Assertions.assertEquals("1", params.get("Num").getValue());
+    }
+
+    @Test
+    void check_rule_test() {
+
+        String error = "error. must be 100!";
+        params.put("Num", new Param("Num").setValue("123"));
+
+        RuleSet<Map<String, Param>> rs =
+                new RuleSet<Map<String, Param>>()
+                        .addRule(new CheckRule<String, String, Map<String, Param>>(
+                                (err, ctx) -> ctx.get("Num").setErr(err))
+                                .setErr(error)
+                                .setCheckCondition(ctx -> "100".equals(ctx.get("Num").getValue()))
+                        );
+
+        rs.accept(params);
+        Assertions.assertEquals(error, params.get("Num").getErr());
+
+        params.put("Num", new Param("Num").setValue("100"));
+        rs.accept(params);
+        Assertions.assertEquals("", params.get("Num").getErr());
     }
 }
 
-class Param {
-    private String id;
-    private String value;
-    private String err;
-
-    public Param(String id, String value) {
-        this.id = id;
-        this.value = value;
-        this.err = "";
-    }
-
-    public Param(String id) {
-        this(id, "");
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getErr() {
-        return err;
-    }
-
-    public void setErr(String err) {
-        this.err = err;
-    }
-}
-
-class ParamValueEqualsPred implements Predicate<ValueCntx<Integer>> {
-    private final Param param;
-
-    public ParamValueEqualsPred(Param param) {
-        this.param = param;
-    }
-
-    @Override
-    public boolean test(ValueCntx<Integer> integerValueCntx) {
-        try {
-            int value = Integer.parseInt(param.getValue());
-            return value == integerValueCntx.value();
-
-        } catch (NumberFormatException ex) {
-            return false;
-        }
-    }
-}
