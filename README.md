@@ -1,0 +1,1 @@
+# vrule - abstract validation rules
