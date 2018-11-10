@@ -2,6 +2,7 @@ package com.tg.vrule.rules;
 
 import com.tg.vrule.ctx.ValueConsumerCtx;
 import com.tg.vrule.ctx.ValueCtx;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,11 @@ public class CaseRule<V, E, T> extends CondRule<T> {
         this.value = value;
         this.errorConsumer = errorConsumer;
         this.cases = new HashMap<>();
+    }
+
+    public CaseRule(ValueCtx<V, T> value, ValueConsumerCtx<E, T> errorConsumer, E err) {
+        this(value, errorConsumer);
+        this.err = err;
     }
 
     public CaseRule<V, E, T> setErr(E err) {

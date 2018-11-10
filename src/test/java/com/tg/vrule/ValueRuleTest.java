@@ -55,7 +55,7 @@ public class ValueRuleTest {
 
         RuleSet<Map<String, Param>> rs =
                 new RuleSet<Map<String, Param>>()
-                        .addRule(new CheckRule<String, String, Map<String, Param>>(
+                        .addRule(new CheckRule<String, Map<String, Param>>(
                                 (err, ctx) -> ctx.get("Num").setErr(err))
                                 .setErr(error)
                                 .setCheckCondition(ctx -> "100".equals(ctx.get("Num").getValue()))

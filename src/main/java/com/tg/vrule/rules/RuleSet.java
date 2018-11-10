@@ -17,8 +17,11 @@ public class RuleSet<T> extends CondRule<T> {
 
     @Override
     public void accept(T targetCtx) {
-        for (Rule<T> rule : rules) {
-            rule.accept(targetCtx);
+        if (isApplied(targetCtx)) {
+            for (Rule<T> rule : rules) {
+                rule.accept(targetCtx);
+            }
         }
     }
+
 }
